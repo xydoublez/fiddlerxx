@@ -24,6 +24,13 @@ namespace fiddlerxx
             sql.Append("--create table sfxfiddler(时间 datetime,请求url varchar(2000),请求内容 varchar(max),响应内容 varchar(max),耗时毫秒 int); \r\n");
             foreach (var r in results)
             {
+                System.Diagnostics.Trace.WriteLine(r.oResponse.MIMEType);
+                if (r.oResponse.MIMEType.Contains("image/png") ||r.oResponse.MIMEType.Contains("image/jpeg") 
+                    || r.oResponse.MIMEType.Contains("image/gif") || r.oResponse.MIMEType.Contains("application/x-javascript")
+                    || r.oResponse.MIMEType.Contains("text/css"))
+                {
+                    continue;
+                }
                 string msg = ("\r\n时间:") + (r.Timers.ServerConnected.ToString("yyyy-MM-dd HH:mm:ss")) + ("\r\n请求内容\r\n") + (r.GetRequestBodyAsString()) + ("\r\n响应时间") + (r.oResponse.iTTLB) + ("毫秒\r\n");
                 Console.WriteLine(msg);
                 output.Append(msg);
@@ -31,23 +38,28 @@ namespace fiddlerxx
                 sql.Append("'");
                 sql.Append(r.Timers.ServerConnected.ToString("yyyy-MM-dd HH:mm:ss"));
                 sql.Append("',");
+
                 sql.Append("'");
                 sql.Append(r.fullUrl);
                 sql.Append("',");
+
                 sql.Append("'");
                 sql.Append(r.GetRequestBodyAsString());
                 sql.Append("',");
+
                 sql.Append("'");
-                sql.Append(r.GetResponseBodyAsString());
+                sql.Append(r.GetResponseBodyAsString().Replace("'",""));
                 sql.Append("',");
+
                 sql.Append("'");
                 sql.Append(r.oResponse.iTTLB);
-                sql.Append("',");
+                sql.Append("'");
+
                 sql.Append(");\r\n");
 
             }
             File.AppendAllText("fiddler.txt", output.ToString(), Encoding.UTF8);
-            File.AppendAllText("fiddlersql.txt", output.ToString(), Encoding.UTF8);
+            File.AppendAllText("fiddler.sql", sql.ToString(), Encoding.UTF8);
             Console.ReadLine();
         }
      
