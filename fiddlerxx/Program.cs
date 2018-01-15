@@ -18,49 +18,84 @@ namespace fiddlerxx
         [STAThread]
         static void Main()
         {
-            var results = test(@" E:\360data\重要数据\桌面\临时\20171010.saz", "");
+            try
+            {
+                var args = Environment.GetCommandLineArgs();
+                if (args.Length >= 2)
+                {
+                    if (args.Length == 2)
+                    {
+                        Proc(args[1], 1000);
+                    }
+                    else
+                    {
+                        Proc(args[1], Convert.ToInt32(args[2]));
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("参数不正确！格式如下 文件名 [超时时间可选]如fiddlerxx.exe e:\\1.saz [1000] ");
+                }
+            }catch(Exception ex)
+            {
+                Console.WriteLine(ex.Message+ex.StackTrace);
+            }
+         
+        }
+        private static void Proc(string file,int timeout)
+        {
+            if (!File.Exists(file))
+            {
+                Console.WriteLine("文件不存在");
+                return;
+            }
+            var results = test(file, "");
             StringBuilder output = new StringBuilder();
             StringBuilder sql = new StringBuilder();
             sql.Append("--create table sfxfiddler(时间 datetime,请求url varchar(2000),请求内容 varchar(max),响应内容 varchar(max),耗时毫秒 int); \r\n");
             foreach (var r in results)
             {
                 System.Diagnostics.Trace.WriteLine(r.oResponse.MIMEType);
-                if (r.oResponse.MIMEType.Contains("image/png") ||r.oResponse.MIMEType.Contains("image/jpeg") 
+                if (r.oResponse.MIMEType.Contains("image/png") || r.oResponse.MIMEType.Contains("image/jpeg")
                     || r.oResponse.MIMEType.Contains("image/gif") || r.oResponse.MIMEType.Contains("application/x-javascript")
                     || r.oResponse.MIMEType.Contains("text/css"))
                 {
                     continue;
                 }
-                string msg = ("\r\n时间:") + (r.Timers.ServerConnected.ToString("yyyy-MM-dd HH:mm:ss")) + ("\r\n请求内容\r\n") + (r.GetRequestBodyAsString()) + ("\r\n响应时间") + (r.oResponse.iTTLB) + ("毫秒\r\n");
-                Console.WriteLine(msg);
-                output.Append(msg);
-                sql.Append("insert into sfxfiddler values(");
-                sql.Append("'");
-                sql.Append(r.Timers.ServerConnected.ToString("yyyy-MM-dd HH:mm:ss"));
-                sql.Append("',");
+                string msg = ("\r\n时间:") + (r.Timers.ServerConnected.ToString("yyyy-MM-dd HH:mm:ss")) + ("\r\n请求URL:\r\n") + r.fullUrl + ("\r\n请求内容:\r\n") + (r.GetRequestBodyAsString()) + ("\r\n响应时间:") + (r.oResponse.iTTLB) + ("毫秒\r\n");
 
-                sql.Append("'");
-                sql.Append(r.fullUrl);
-                sql.Append("',");
+                if (r.oResponse.iTTLB > timeout)
+                {
+                    output.Append(msg);
+                    Console.WriteLine(msg);
+                    sql.Append("insert into sfxfiddler values(");
+                    sql.Append("'");
+                    sql.Append(r.Timers.ServerConnected.ToString("yyyy-MM-dd HH:mm:ss"));
+                    sql.Append("',");
 
-                sql.Append("'");
-                sql.Append(r.GetRequestBodyAsString());
-                sql.Append("',");
+                    sql.Append("'");
+                    sql.Append(r.fullUrl);
+                    sql.Append("',");
 
-                sql.Append("'");
-                sql.Append(r.GetResponseBodyAsString().Replace("'",""));
-                sql.Append("',");
+                    sql.Append("'");
+                    sql.Append(r.GetRequestBodyAsString());
+                    sql.Append("',");
 
-                sql.Append("'");
-                sql.Append(r.oResponse.iTTLB);
-                sql.Append("'");
+                    sql.Append("'");
+                    sql.Append(r.GetResponseBodyAsString().Replace("'", ""));
+                    sql.Append("',");
 
-                sql.Append(");\r\n");
+                    sql.Append("'");
+                    sql.Append(r.oResponse.iTTLB);
+                    sql.Append("'");
+
+                    sql.Append(");\r\n");
+                }
+              
 
             }
             File.AppendAllText("fiddler.txt", output.ToString(), Encoding.UTF8);
             File.AppendAllText("fiddler.sql", sql.ToString(), Encoding.UTF8);
-            Console.ReadLine();
         }
      
         private static IEnumerable<Session> test(string sazFile, string password)
