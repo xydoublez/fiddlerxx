@@ -29,7 +29,14 @@ namespace fiddlerxx
                     }
                     else
                     {
-                        Proc(args[1], Convert.ToInt32(args[2]));
+                        if (args.Length == 4)
+                        {
+                            Proc(args[1], Convert.ToInt32(args[2]),args[3]);
+                        }
+                        else
+                        {
+                            Proc(args[1], Convert.ToInt32(args[2]));
+                        }
                     }
                 }
                 else
@@ -42,7 +49,7 @@ namespace fiddlerxx
             }
          
         }
-        private static void Proc(string file,int timeout)
+        private static void Proc(string file,int timeout,string keyword="")
         {
             if (!File.Exists(file))
             {
@@ -62,40 +69,41 @@ namespace fiddlerxx
                 {
                     continue;
                 }
-                string msg = ("\r\n时间:") + (r.Timers.ServerConnected.ToString("yyyy-MM-dd HH:mm:ss")) + ("\r\n请求URL:\r\n") + r.fullUrl + ("\r\n请求内容:\r\n") + (r.GetRequestBodyAsString()) + ("\r\n响应时间:") + (r.oResponse.iTTLB) + ("毫秒\r\n");
+                string msg = ("\r\n时间:") + (r.Timers.ServerConnected.ToString("yyyy-MM-dd HH:mm:ss")) +"\r\nID:" + r.id + ("\r\n请求URL:\r\n") + r.fullUrl + ("\r\n请求内容:\r\n") + (r.GetRequestBodyAsString()) + ("\r\n响应时间:") + (r.oResponse.iTTLB) + ("毫秒\r\n");
 
                 if (r.oResponse.iTTLB > timeout)
                 {
+                    if (keyword.Length > 0 && r.fullUrl.ToLower().IndexOf(keyword.ToLower()) == -1) continue;
                     output.Append(msg);
                     Console.WriteLine(msg);
-                    sql.Append("insert into sfxfiddler values(");
-                    sql.Append("'");
-                    sql.Append(r.Timers.ServerConnected.ToString("yyyy-MM-dd HH:mm:ss"));
-                    sql.Append("',");
+                    //sql.Append("insert into sfxfiddler values(");
+                    //sql.Append("'");
+                    //sql.Append(r.Timers.ServerConnected.ToString("yyyy-MM-dd HH:mm:ss"));
+                    //sql.Append("',");
 
-                    sql.Append("'");
-                    sql.Append(r.fullUrl);
-                    sql.Append("',");
+                    //sql.Append("'");
+                    //sql.Append(r.fullUrl);
+                    //sql.Append("',");
 
-                    sql.Append("'");
-                    sql.Append(r.GetRequestBodyAsString());
-                    sql.Append("',");
+                    //sql.Append("'");
+                    //sql.Append(r.GetRequestBodyAsString());
+                    //sql.Append("',");
 
-                    sql.Append("'");
-                    sql.Append(r.GetResponseBodyAsString().Replace("'", ""));
-                    sql.Append("',");
+                    //sql.Append("'");
+                    //sql.Append(r.GetResponseBodyAsString().Replace("'", ""));
+                    //sql.Append("',");
 
-                    sql.Append("'");
-                    sql.Append(r.oResponse.iTTLB);
-                    sql.Append("'");
+                    //sql.Append("'");
+                    //sql.Append(r.oResponse.iTTLB);
+                    //sql.Append("'");
 
-                    sql.Append(");\r\n");
+                    //sql.Append(");\r\n");
                 }
               
 
             }
             File.AppendAllText("fiddler.txt", output.ToString(), Encoding.UTF8);
-            File.AppendAllText("fiddler.sql", sql.ToString(), Encoding.UTF8);
+            //File.AppendAllText("fiddler.sql", sql.ToString(), Encoding.UTF8);
         }
      
         private static IEnumerable<Session> test(string sazFile, string password)
