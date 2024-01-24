@@ -70,48 +70,25 @@ namespace fiddlerxxForm
             StringBuilder output = new StringBuilder();
             foreach (var r in results)
             {
-                System.Diagnostics.Trace.WriteLine(r.oResponse.MIMEType);
-                if (r.oResponse.MIMEType.Contains("image/png") || r.oResponse.MIMEType.Contains("image/jpeg")
-                    || r.oResponse.MIMEType.Contains("image/gif") || r.oResponse.MIMEType.Contains("application/x-javascript")
-                    || r.oResponse.MIMEType.Contains("text/css"))
-                {
-                    continue;
-                }
-                string msg = ("\r\n时间:") + (r.Timers.ServerConnected.ToString("yyyy-MM-dd HH:mm:ss")) + "\r\nID:" + r.id + ("\r\n请求URL:\r\n") + r.fullUrl + ("\r\n请求内容:\r\n") + (r.GetRequestBodyAsString()) + ("\r\n响应时间:") + (r.oResponse.iTTLB) + ("毫秒\r\n");
+                //System.Diagnostics.Trace.WriteLine(r.oResponse.MIMEType);
+                //if (r.oResponse.MIMEType.Contains("image/png") || r.oResponse.MIMEType.Contains("image/jpeg")
+                //    || r.oResponse.MIMEType.Contains("image/gif") || r.oResponse.MIMEType.Contains("application/x-javascript")
+                //    || r.oResponse.MIMEType.Contains("text/css"))
+                //{
+                //    continue;
+                //}
+                string msg = ("****************************************\r\n时间:") + (r.Timers.ClientBeginRequest.ToString("yyyy-MM-dd HH:mm:ss")) + "\r\nID:" + r.id + ("\r\n请求URL:\r\n") + r.fullUrl + ("\r\n请求内容:\r\n") + (r.GetRequestBodyAsString()) + ("\r\n响应时间:") + (r.oResponse.iTTLB) + ("毫秒\r\n");
 
                 if (r.oResponse.iTTLB > timeout)
                 {
                     if (keyword.Length > 0 && r.fullUrl.ToLower().IndexOf(keyword.ToLower()) == -1) continue;
                     output.Append(msg);
                     Console.WriteLine(msg);
-                    //sql.Append("insert into sfxfiddler values(");
-                    //sql.Append("'");
-                    //sql.Append(r.Timers.ServerConnected.ToString("yyyy-MM-dd HH:mm:ss"));
-                    //sql.Append("',");
-
-                    //sql.Append("'");
-                    //sql.Append(r.fullUrl);
-                    //sql.Append("',");
-
-                    //sql.Append("'");
-                    //sql.Append(r.GetRequestBodyAsString());
-                    //sql.Append("',");
-
-                    //sql.Append("'");
-                    //sql.Append(r.GetResponseBodyAsString().Replace("'", ""));
-                    //sql.Append("',");
-
-                    //sql.Append("'");
-                    //sql.Append(r.oResponse.iTTLB);
-                    //sql.Append("'");
-
-                    //sql.Append(");\r\n");
+                  
                 }
-
 
             }
             File.AppendAllText(file+".txt", output.ToString(), Encoding.UTF8);
-            //File.AppendAllText("fiddler.sql", sql.ToString(), Encoding.UTF8);
         }
 
         private static IEnumerable<Session> test(string sazFile, string password)
@@ -119,29 +96,18 @@ namespace fiddlerxxForm
             List<Session> result = new List<Session>();
             using (ZipFile zip = ZipFile.Read(sazFile))
             {
-                //result = (from z in zip.Entries
-                //          where z.FileName.EndsWith("_c.txt")
-                //          select z.ExtractWithPasswordToBytes(password) into request
-                //          select new Session(request, new byte[0])).ToList<Session>();
-
-                //foreach (var z in zip.Entries)
-                //{
-                //    if (z.FileName.EndsWith("_c.txt")) {
-                //        var req = z.ExtractWithPasswordToBytes(password);
-                //    }
-
-                //}
-                for (int i = 1; i < zip.Entries.Count; i += 3)
+                foreach (var z in zip.Entries)
                 {
-                    if (zip[i].FileName.EndsWith(".txt"))
+                    if (z.FileName.EndsWith("_c.txt"))
                     {
-                        Session s = new Session(zip[i].ExtractWithPasswordToBytes(password), zip[i + 2].ExtractWithPasswordToBytes(password));
-                        s.LoadMetadata(zip[i + 1].ExtractWithPassword2(password));
+                        var req = z.ExtractWithPasswordToBytes(password);
+                        var response = zip.Entries.Where(e => e.FileName == z.FileName.Replace("_c.txt", "_s.txt")).FirstOrDefault();
+                        var meta = zip.Entries.Where(e => e.FileName == z.FileName.Replace("_c.txt", "_m.xml")).FirstOrDefault();
+                        Session s = new Session(req, response.ExtractWithPasswordToBytes(password));
+                        s.LoadMetadata(meta.ExtractWithPassword2(password));
                         result.Add(s);
                     }
-
                 }
-
             }
             return result;
         }
